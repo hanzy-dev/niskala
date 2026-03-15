@@ -14,11 +14,16 @@ func NewRouter() *gin.Engine {
 	router.Use(gin.Recovery())
 
 	healthHandler := handler.NewHealthHandler()
+
 	productService := service.NewProductService()
 	cartService := service.NewCartService()
+	orderService := service.NewOrderService()
+	checkoutService := service.NewCheckoutService(productService, cartService, orderService)
 
 	productHandler := handler.NewProductHandler(productService)
 	cartHandler := handler.NewCartHandler(cartService)
+	checkoutHandler := handler.NewCheckoutHandler(checkoutService)
+	orderHandler := handler.NewOrderHandler(orderService)
 	meHandler := handler.NewMeHandler()
 
 	router.GET("/health", healthHandler.GetHealth)
@@ -32,10 +37,15 @@ func NewRouter() *gin.Engine {
 		protected.Use(auth.RequireAuth())
 		{
 			protected.GET("/me", meHandler.GetMe)
+
 			protected.GET("/cart", cartHandler.GetCart)
 			protected.POST("/cart/items", cartHandler.AddCartItem)
 			protected.PATCH("/cart/items/:productId", cartHandler.UpdateCartItem)
 			protected.DELETE("/cart/items/:productId", cartHandler.DeleteCartItem)
+
+			protected.POST("/checkout", checkoutHandler.Checkout)
+			protected.GET("/orders", orderHandler.ListOrders)
+			protected.GET("/orders/:id", orderHandler.GetOrder)
 
 			admin := protected.Group("/admin")
 			admin.Use(auth.RequireAdmin())
