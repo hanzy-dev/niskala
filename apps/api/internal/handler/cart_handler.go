@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hanzy-dev/niskala/apps/api/internal/auth"
+	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 )
 
@@ -35,24 +36,12 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 func (h *CartHandler) AddCartItem(c *gin.Context) {
 	var request AddCartItemRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": gin.H{
-				"code":    "INVALID_INPUT",
-				"message": "Invalid request body",
-				"details": nil,
-			},
-		})
+		httpx.BadRequest(c, "INVALID_INPUT", "Invalid request body")
 		return
 	}
 
 	if request.ProductID == "" || request.Qty <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": gin.H{
-				"code":    "INVALID_INPUT",
-				"message": "product_id and qty must be valid",
-				"details": nil,
-			},
-		})
+		httpx.BadRequest(c, "INVALID_INPUT", "product_id and qty must be valid")
 		return
 	}
 
@@ -63,13 +52,7 @@ func (h *CartHandler) AddCartItem(c *gin.Context) {
 func (h *CartHandler) UpdateCartItem(c *gin.Context) {
 	var request UpdateCartItemRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": gin.H{
-				"code":    "INVALID_INPUT",
-				"message": "Invalid request body",
-				"details": nil,
-			},
-		})
+		httpx.BadRequest(c, "INVALID_INPUT", "Invalid request body")
 		return
 	}
 

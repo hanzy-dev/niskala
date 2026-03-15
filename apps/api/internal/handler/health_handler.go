@@ -1,19 +1,22 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
 
-type HealthHandler struct{}
+	"github.com/gin-gonic/gin"
+	"github.com/hanzy-dev/niskala/apps/api/internal/service"
+)
 
-func NewHealthHandler() *HealthHandler {
-	return &HealthHandler{}
+type HealthHandler struct {
+	healthService *service.HealthService
+}
+
+func NewHealthHandler(healthService *service.HealthService) *HealthHandler {
+	return &HealthHandler{
+		healthService: healthService,
+	}
 }
 
 func (h *HealthHandler) GetHealth(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"status":             "ok",
-		"service":            "api",
-		"database":           "unknown",
-		"pricing_service":    "unknown",
-		"checkout_available": false,
-	})
+	c.JSON(http.StatusOK, h.healthService.GetStatus())
 }

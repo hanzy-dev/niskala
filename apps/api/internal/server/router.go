@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hanzy-dev/niskala/apps/api/internal/auth"
 	"github.com/hanzy-dev/niskala/apps/api/internal/handler"
+	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 )
 
@@ -14,10 +15,12 @@ type Dependencies struct {
 func NewRouter(deps Dependencies) *gin.Engine {
 	router := gin.New()
 
+	router.Use(httpx.CorrelationIDMiddleware())
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	healthHandler := handler.NewHealthHandler()
+	healthService := service.NewHealthService(deps.PricingServiceBaseURL)
+	healthHandler := handler.NewHealthHandler(healthService)
 
 	productService := service.NewProductService()
 	cartService := service.NewCartService()

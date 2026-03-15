@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 )
 
@@ -28,13 +29,7 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 
 	product, ok := h.productService.GetByID(productID)
 	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": gin.H{
-				"code":    "PRODUCT_NOT_FOUND",
-				"message": "Product was not found",
-				"details": nil,
-			},
-		})
+		httpx.NotFound(c, "PRODUCT_NOT_FOUND", "Product was not found")
 		return
 	}
 

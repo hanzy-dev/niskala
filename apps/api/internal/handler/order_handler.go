@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hanzy-dev/niskala/apps/api/internal/auth"
+	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 )
 
@@ -32,13 +33,7 @@ func (h *OrderHandler) GetOrder(c *gin.Context) {
 
 	order, ok := h.orderService.GetByUserIDAndOrderID(userID, orderID)
 	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": gin.H{
-				"code":    "ORDER_NOT_FOUND",
-				"message": "Order was not found",
-				"details": nil,
-			},
-		})
+		httpx.NotFound(c, "ORDER_NOT_FOUND", "Order was not found")
 		return
 	}
 

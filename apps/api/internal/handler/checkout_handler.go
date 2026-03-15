@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hanzy-dev/niskala/apps/api/internal/auth"
+	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 )
 
@@ -27,52 +28,27 @@ func (h *CheckoutHandler) Checkout(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrMissingIdempotencyKey):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": gin.H{
-					"code":    "MISSING_IDEMPOTENCY_KEY",
-					"message": "Idempotency-Key header is required",
-					"details": nil,
-				},
-			})
+			httpx.BadRequest(c, "MISSING_IDEMPOTENCY_KEY", "Idempotency-Key header is required")
 			return
 		case errors.Is(err, service.ErrIdempotencyInProgress):
-			c.JSON(http.StatusConflict, gin.H{
-				"error": gin.H{
-					"code":    "IDEMPOTENCY_IN_PROGRESS",
-					"message": "Checkout is already being processed for this key",
-					"details": nil,
-				},
-			})
+			httpx.JSONError(c, http.StatusConflict, "IDEMPOTENCY_IN_PROGRESS", "Checkout is already being processed for this key", nil)
 			return
 		case errors.Is(err, service.ErrEmptyCart):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": gin.H{
-					"code":    "EMPTY_CART",
-					"message": "Cart is empty",
-					"details": nil,
-				},
-			})
+			httpx.BadRequest(c, "EMPTY_CART", "Cart is empty")
 			return
 		case errors.Is(err, service.ErrProductNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": gin.H{
-					"code":    "PRODUCT_NOT_FOUND",
-					"message": "One or more products could not be resolved",
-					"details": nil,
-				},
-			})
+			httpx.BadRequest(c, "PRODUCT_NOT_FOUND", "One or more products could not be resolved")
 			return
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": gin.H{
-					"code":    "CHECKOUT_FAILED",
-					"message": "Checkout could not be completed",
-					"details": nil,
-				},
-			})
+			httpx.Internal(c, "CHECKOUT_FAILED", "Checkout could not be completed")
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, order)
+	c.JSON(http.StatusOK, gin.H{
+		"order": order,
+		"meta": gin.H{
+			"correlation_id": httpx.GetCorrelationID(c),
+		},
+	})
 }
