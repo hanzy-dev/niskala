@@ -9,7 +9,10 @@ import (
 
 func main() {
 	cfg := config.Load()
-	router := server.NewRouter()
+
+	router := server.NewRouter(server.Dependencies{
+		PricingServiceBaseURL: cfg.PricingServiceBaseURL,
+	})
 
 	log.Printf("starting api server on port %s in %s mode", cfg.Port, cfg.AppEnv)
 

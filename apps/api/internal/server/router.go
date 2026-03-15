@@ -7,7 +7,11 @@ import (
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 )
 
-func NewRouter() *gin.Engine {
+type Dependencies struct {
+	PricingServiceBaseURL string
+}
+
+func NewRouter(deps Dependencies) *gin.Engine {
 	router := gin.New()
 
 	router.Use(gin.Logger())
@@ -18,7 +22,15 @@ func NewRouter() *gin.Engine {
 	productService := service.NewProductService()
 	cartService := service.NewCartService()
 	orderService := service.NewOrderService()
-	checkoutService := service.NewCheckoutService(productService, cartService, orderService)
+	idempotencyService := service.NewIdempotencyService()
+	pricingService := service.NewPricingService(deps.PricingServiceBaseURL)
+	checkoutService := service.NewCheckoutService(
+		productService,
+		cartService,
+		orderService,
+		idempotencyService,
+		pricingService,
+	)
 
 	productHandler := handler.NewProductHandler(productService)
 	cartHandler := handler.NewCartHandler(cartService)
