@@ -1,0 +1,13 @@
+git init
+git branch -M main
+
+mkdir -p apps/web
+mkdir -p apps/api
+mkdir -p apps/pricing
+mkdir -p docs
+mkdir -p infra/docker
+mkdir -p scripts
+
+touch README.md
+touch .gitignore
+touch .editorconfig
