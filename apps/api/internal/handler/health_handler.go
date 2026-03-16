@@ -18,5 +18,5 @@ func NewHealthHandler(healthService *service.HealthService) *HealthHandler {
 }
 
 func (h *HealthHandler) GetHealth(c *gin.Context) {
-	c.JSON(http.StatusOK, h.healthService.GetStatus())
+	c.JSON(http.StatusOK, h.healthService.GetStatus(c.Request.Context()))
 }

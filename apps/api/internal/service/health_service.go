@@ -1,11 +1,16 @@
 package service
 
 import (
+	"context"
 	"net/http"
 	"time"
+
+	"github.com/hanzy-dev/niskala/apps/api/internal/database"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type HealthService struct {
+	db                    *pgxpool.Pool
 	pricingServiceBaseURL string
 	httpClient            *http.Client
 }
@@ -18,8 +23,9 @@ type HealthStatus struct {
 	CheckoutAvailable bool   `json:"checkout_available"`
 }
 
-func NewHealthService(pricingServiceBaseURL string) *HealthService {
+func NewHealthService(db *pgxpool.Pool, pricingServiceBaseURL string) *HealthService {
 	return &HealthService{
+		db:                    db,
 		pricingServiceBaseURL: pricingServiceBaseURL,
 		httpClient: &http.Client{
 			Timeout: 200 * time.Millisecond,
@@ -27,8 +33,13 @@ func NewHealthService(pricingServiceBaseURL string) *HealthService {
 	}
 }
 
-func (s *HealthService) GetStatus() HealthStatus {
+func (s *HealthService) GetStatus(ctx context.Context) HealthStatus {
+	databaseStatus := "down"
 	pricingStatus := "down"
+
+	if s.db != nil && database.Ping(ctx, s.db) == nil {
+		databaseStatus = "ok"
+	}
 
 	response, err := s.httpClient.Get(s.pricingServiceBaseURL + "/health")
 	if err == nil && response != nil {
@@ -41,14 +52,17 @@ func (s *HealthService) GetStatus() HealthStatus {
 	status := "ok"
 	checkoutAvailable := true
 
-	if pricingStatus != "ok" {
+	if databaseStatus != "ok" {
+		status = "down"
+		checkoutAvailable = false
+	} else if pricingStatus != "ok" {
 		status = "degraded"
 	}
 
 	return HealthStatus{
 		Status:            status,
 		Service:           "api",
-		Database:          "unknown",
+		Database:          databaseStatus,
 		PricingService:    pricingStatus,
 		CheckoutAvailable: checkoutAvailable,
 	}

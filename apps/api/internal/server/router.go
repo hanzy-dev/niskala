@@ -6,9 +6,11 @@ import (
 	"github.com/hanzy-dev/niskala/apps/api/internal/handler"
 	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Dependencies struct {
+	DB                    *pgxpool.Pool
 	PricingServiceBaseURL string
 }
 
@@ -19,7 +21,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	healthService := service.NewHealthService(deps.PricingServiceBaseURL)
+	healthService := service.NewHealthService(deps.DB, deps.PricingServiceBaseURL)
 	healthHandler := handler.NewHealthHandler(healthService)
 
 	productService := service.NewProductService()
