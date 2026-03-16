@@ -2,36 +2,28 @@
 
 A backend-heavy commerce system focused on checkout correctness, idempotent order processing, stock-safe transactions, and resilience against downstream service failures.
 
-## Why this project exists
+## Overview
 
-Niskala is built to demonstrate backend engineering maturity through a commerce workflow that prioritizes transaction correctness, retry safety, stock consistency, resilience, and observability.
+Niskala is a backend-heavy commerce project designed to demonstrate:
+- safe checkout flow design
+- idempotent order creation
+- stock-safe transaction handling
+- pricing service fallback
+- Redis-backed local infrastructure
+- cross-service observability
 
-Instead of focusing on feature breadth, this project focuses on engineering depth in the parts of commerce systems that commonly fail in real-world environments:
-- duplicate checkout
-- stock inconsistency
-- race conditions
-- trust boundary violations
-- downstream dependency failure
-- poor request traceability
+It is intentionally built to emphasize backend engineering depth over UI complexity.
 
-## Core goals
-
-- Design a safe transactional checkout flow
-- Prevent duplicate orders with idempotency keys
-- Keep stock consistent during concurrent checkout
-- Continue checkout when pricing service fails
-- Trace requests across frontend, API, and pricing service
-- Keep architecture clean, small, and reviewable
-
-## Final stack
+## Stack
 
 ### Frontend
 - Vue 3
 - TypeScript
 - Pinia
 - Vue Router
+- Axios
 
-### Main API
+### API
 - Go
 - Gin
 
@@ -43,38 +35,88 @@ Instead of focusing on feature breadth, this project focuses on engineering dept
 - Supabase Auth
 - Supabase Postgres
 - Redis
-- Resend
 - Docker Compose
 - GitHub Actions
 
-## Project shape
+## Current capabilities
 
-Niskala is intentionally built as a backend-heavy system.
+- product list and product detail flow
+- cart add/update/delete flow
+- checkout placeholder flow
+- order history and order detail flow
+- idempotency key replay support
+- pricing service integration
+- pricing fallback foundation
+- correlation ID propagation
+- consistent error response format
+- local infra with Redis
 
-The frontend exists to demonstrate the product flow:
-- login
-- product catalog
-- product detail
-- cart
-- checkout
-- order history
-- admin product management
+## Project structure
 
-The main value of the project is in the backend:
-- transactional checkout
-- idempotency
-- stock locking
-- pricing fallback
-- cache strategy
-- observability
-- clean service boundaries
+- `apps/web` — Vue frontend
+- `apps/api` — Go API
+- `apps/pricing` — Rust pricing service
+- `docs` — architecture and scope docs
+- `scripts` — local helper scripts
 
-## Documentation
+## Run locally
 
-- [Architecture](./docs/architecture.md)
-- [Scope](./docs/scope.md)
-- [Engineering decisions](./docs/engineering-decisions.md)
+### Web
+```bash
+cd apps/web
+npm install
+npm run dev
+```
 
-## Status
+### API
 
-This project is being built incrementally in small, reviewable batches with clean commit history.
+```
+cd apps/api
+go run ./cmd/server
+```
+
+### Pricing service
+
+```
+cd apps/pricing
+cargo run
+```
+
+### Redis
+
+```
+docker compose up -d
+```
+
+## Tests
+
+### API
+
+```
+cd apps/api
+go test ./...
+```
+
+### Pricing
+
+```
+cd apps/pricing
+cargo test
+```
+
+## Engineering notes
+
+- money values use integer cents
+- checkout requires Idempotency-Key
+- pricing service failures can fall back to normal pricing
+- correlation IDs are propagated through HTTP requests
+- current auth flow uses debug headers as a local development placeholder
+
+## Next evolution
+
+- replace debug auth with Supabase JWT verification
+- move in-memory flows to Postgres-backed repositories
+- add transactional checkout with row locking
+- persist idempotency records in the database
+- add Redis-backed product caching
+- enrich structured logging and metrics
