@@ -55,7 +55,11 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 
 	s.idempotencyService.StartProcessing(userID, idemKey)
 
-	cart := s.cartService.GetCart(userID)
+	cart, err := s.cartService.GetCart(ctx, userID)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
 	if len(cart.Items) == 0 {
 		return domain.Order{}, ErrEmptyCart
 	}
@@ -105,7 +109,10 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		Items:               orderItems,
 	})
 
-	s.cartService.ClearCart(userID)
+	if err := s.cartService.ClearCart(ctx, userID); err != nil {
+		return domain.Order{}, err
+	}
+
 	s.idempotencyService.Complete(userID, idemKey, &order)
 
 	return order, nil

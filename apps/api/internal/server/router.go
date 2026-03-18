@@ -26,9 +26,10 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	healthHandler := handler.NewHealthHandler(healthService)
 
 	productRepository := repository.NewProductRepository(deps.DB)
+	cartRepository := repository.NewCartRepository(deps.DB)
 
 	productService := service.NewProductService(productRepository)
-	cartService := service.NewCartService()
+	cartService := service.NewCartService(cartRepository)
 	orderService := service.NewOrderService()
 	idempotencyService := service.NewIdempotencyService()
 	pricingService := service.NewPricingService(deps.PricingServiceBaseURL)
