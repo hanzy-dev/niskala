@@ -19,15 +19,26 @@ func NewProductHandler(productService *service.ProductService) *ProductHandler {
 }
 
 func (h *ProductHandler) ListProducts(c *gin.Context) {
+	products, err := h.productService.List(c.Request.Context())
+	if err != nil {
+		httpx.Internal(c, "PRODUCT_LIST_FAILED", "Failed to load products")
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"items": h.productService.List(),
+		"items": products,
 	})
 }
 
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	productID := c.Param("id")
 
-	product, ok := h.productService.GetByID(productID)
+	product, ok, err := h.productService.GetByID(c.Request.Context(), productID)
+	if err != nil {
+		httpx.Internal(c, "PRODUCT_GET_FAILED", "Failed to load product")
+		return
+	}
+
 	if !ok {
 		httpx.NotFound(c, "PRODUCT_NOT_FOUND", "Product was not found")
 		return

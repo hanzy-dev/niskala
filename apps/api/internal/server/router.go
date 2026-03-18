@@ -5,6 +5,7 @@ import (
 	"github.com/hanzy-dev/niskala/apps/api/internal/auth"
 	"github.com/hanzy-dev/niskala/apps/api/internal/handler"
 	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
+	"github.com/hanzy-dev/niskala/apps/api/internal/repository"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -24,7 +25,9 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	healthService := service.NewHealthService(deps.DB, deps.PricingServiceBaseURL)
 	healthHandler := handler.NewHealthHandler(healthService)
 
-	productService := service.NewProductService()
+	productRepository := repository.NewProductRepository(deps.DB)
+
+	productService := service.NewProductService(productRepository)
 	cartService := service.NewCartService()
 	orderService := service.NewOrderService()
 	idempotencyService := service.NewIdempotencyService()

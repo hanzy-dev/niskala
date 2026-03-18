@@ -64,7 +64,10 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 	orderItems := make([]domain.OrderItem, 0, len(cart.Items))
 
 	for _, cartItem := range cart.Items {
-		product, ok := s.productService.GetByID(cartItem.ProductID)
+		product, ok, err := s.productService.GetByID(ctx, cartItem.ProductID)
+		if err != nil {
+			return domain.Order{}, err
+		}
 		if !ok {
 			return domain.Order{}, ErrProductNotFound
 		}
