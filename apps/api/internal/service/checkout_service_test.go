@@ -10,10 +10,11 @@ import (
 func TestCheckoutFailsWhenCartIsEmpty(t *testing.T) {
 	productRepository := repository.NewProductRepository(nil)
 	cartRepository := repository.NewCartRepository(nil)
+	orderRepository := repository.NewOrderRepository(nil)
 
 	productService := NewProductService(productRepository)
 	cartService := NewCartService(cartRepository)
-	orderService := NewOrderService()
+	orderService := NewOrderService(orderRepository)
 	idempotencyService := NewIdempotencyService()
 	pricingService := NewPricingService("http://localhost:8081")
 
@@ -34,10 +35,11 @@ func TestCheckoutFailsWhenCartIsEmpty(t *testing.T) {
 func TestCheckoutFailsWithoutSeededProducts(t *testing.T) {
 	productRepository := repository.NewProductRepository(nil)
 	cartRepository := repository.NewCartRepository(nil)
+	orderRepository := repository.NewOrderRepository(nil)
 
 	productService := NewProductService(productRepository)
 	cartService := NewCartService(cartRepository)
-	orderService := NewOrderService()
+	orderService := NewOrderService(orderRepository)
 	idempotencyService := NewIdempotencyService()
 	pricingService := NewPricingService("http://localhost:8081")
 

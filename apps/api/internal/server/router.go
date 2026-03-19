@@ -26,11 +26,12 @@ func NewRouter(deps Dependencies) *gin.Engine {
 
 	productRepository := repository.NewProductRepository(deps.DB)
 	cartRepository := repository.NewCartRepository(deps.DB)
+	orderRepository := repository.NewOrderRepository(deps.DB)
 	membershipRepository := repository.NewMembershipRepository(deps.DB)
 
 	productService := service.NewProductService(productRepository)
 	cartService := service.NewCartService(cartRepository)
-	orderService := service.NewOrderService()
+	orderService := service.NewOrderService(orderRepository)
 	idempotencyService := service.NewIdempotencyService()
 	pricingService := service.NewPricingService(deps.PricingServiceBaseURL)
 	membershipService := service.NewMembershipService(membershipRepository)

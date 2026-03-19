@@ -99,7 +99,7 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		pricingFallbackUsed = true
 	}
 
-	order := s.orderService.Create(domain.Order{
+	order, err := s.orderService.Create(ctx, domain.Order{
 		UserID:              userID,
 		Status:              "created",
 		SubtotalCents:       subtotalCents,
@@ -108,6 +108,9 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		PricingFallbackUsed: pricingFallbackUsed,
 		Items:               orderItems,
 	})
+	if err != nil {
+		return domain.Order{}, err
+	}
 
 	if err := s.cartService.ClearCart(ctx, userID); err != nil {
 		return domain.Order{}, err

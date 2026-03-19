@@ -1,51 +1,30 @@
 package service
 
 import (
-	"fmt"
-	"sync"
+	"context"
 
 	"github.com/hanzy-dev/niskala/apps/api/internal/domain"
+	"github.com/hanzy-dev/niskala/apps/api/internal/repository"
 )
 
 type OrderService struct {
-	mu      sync.RWMutex
-	orders  map[string][]domain.Order
-	counter int
+	orderRepository *repository.OrderRepository
 }
 
-func NewOrderService() *OrderService {
+func NewOrderService(orderRepository *repository.OrderRepository) *OrderService {
 	return &OrderService{
-		orders: make(map[string][]domain.Order),
+		orderRepository: orderRepository,
 	}
 }
 
-func (s *OrderService) Create(order domain.Order) domain.Order {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.counter++
-	order.ID = fmt.Sprintf("ord_%d", s.counter)
-
-	s.orders[order.UserID] = append([]domain.Order{order}, s.orders[order.UserID]...)
-	return order
+func (s *OrderService) Create(ctx context.Context, order domain.Order) (domain.Order, error) {
+	return s.orderRepository.Create(ctx, order)
 }
 
-func (s *OrderService) ListByUserID(userID string) []domain.Order {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	return s.orders[userID]
+func (s *OrderService) ListByUserID(ctx context.Context, userID string) ([]domain.Order, error) {
+	return s.orderRepository.ListByUserID(ctx, userID)
 }
 
-func (s *OrderService) GetByUserIDAndOrderID(userID string, orderID string) (domain.Order, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	for _, order := range s.orders[userID] {
-		if order.ID == orderID {
-			return order, true
-		}
-	}
-
-	return domain.Order{}, false
+func (s *OrderService) GetByUserIDAndOrderID(ctx context.Context, userID string, orderID string) (domain.Order, bool, error) {
+	return s.orderRepository.GetByUserIDAndOrderID(ctx, userID, orderID)
 }
