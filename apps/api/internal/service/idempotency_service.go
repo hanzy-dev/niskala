@@ -1,55 +1,54 @@
 package service
 
 import (
-	"sync"
+	"context"
 
 	"github.com/hanzy-dev/niskala/apps/api/internal/domain"
+	"github.com/hanzy-dev/niskala/apps/api/internal/repository"
 )
 
 type IdempotencyService struct {
-	mu      sync.RWMutex
-	records map[string]domain.IdempotencyRecord
+	idempotencyRepository *repository.IdempotencyRepository
+	orderRepository       *repository.OrderRepository
 }
 
-func NewIdempotencyService() *IdempotencyService {
+func NewIdempotencyService(
+	idempotencyRepository *repository.IdempotencyRepository,
+	orderRepository *repository.OrderRepository,
+) *IdempotencyService {
 	return &IdempotencyService{
-		records: make(map[string]domain.IdempotencyRecord),
+		idempotencyRepository: idempotencyRepository,
+		orderRepository:       orderRepository,
 	}
 }
 
-func (s *IdempotencyService) key(userID string, idemKey string) string {
-	return userID + ":" + idemKey
-}
-
-func (s *IdempotencyService) Get(userID string, idemKey string) (domain.IdempotencyRecord, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	record, ok := s.records[s.key(userID, idemKey)]
-	return record, ok
-}
-
-func (s *IdempotencyService) StartProcessing(userID string, idemKey string) domain.IdempotencyRecord {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	record := domain.IdempotencyRecord{
-		UserID: userID,
-		Key:    idemKey,
-		Status: domain.IdempotencyStatusProcessing,
+func (s *IdempotencyService) Get(ctx context.Context, userID string, idemKey string) (domain.IdempotencyRecord, bool, error) {
+	record, exists, err := s.idempotencyRepository.Get(ctx, userID, idemKey)
+	if err != nil || !exists {
+		return record, exists, err
 	}
-	s.records[s.key(userID, idemKey)] = record
-	return record
+
+	if record.Status == domain.IdempotencyStatusCompleted && record.ResponseOrder != nil && record.ResponseOrder.ID != "" {
+		order, ok, err := s.orderRepository.GetByUserIDAndOrderID(ctx, userID, record.ResponseOrder.ID)
+		if err != nil {
+			return domain.IdempotencyRecord{}, false, err
+		}
+		if ok {
+			record.ResponseOrder = &order
+		}
+	}
+
+	return record, true, nil
 }
 
-func (s *IdempotencyService) Complete(userID string, idemKey string, order *domain.Order) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *IdempotencyService) StartProcessing(ctx context.Context, userID string, idemKey string) error {
+	return s.idempotencyRepository.StartProcessing(ctx, userID, idemKey)
+}
 
-	s.records[s.key(userID, idemKey)] = domain.IdempotencyRecord{
-		UserID:        userID,
-		Key:           idemKey,
-		Status:        domain.IdempotencyStatusCompleted,
-		ResponseOrder: order,
-	}
+func (s *IdempotencyService) Complete(ctx context.Context, userID string, idemKey string, order *domain.Order) error {
+	return s.idempotencyRepository.Complete(ctx, userID, idemKey, order.ID)
+}
+
+func (s *IdempotencyService) Delete(ctx context.Context, userID string, idemKey string) error {
+	return s.idempotencyRepository.Delete(ctx, userID, idemKey)
 }

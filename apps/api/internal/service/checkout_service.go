@@ -45,7 +45,9 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		return domain.Order{}, ErrMissingIdempotencyKey
 	}
 
-	if record, exists := s.idempotencyService.Get(userID, idemKey); exists {
+	if record, exists, err := s.idempotencyService.Get(ctx, userID, idemKey); err != nil {
+		return domain.Order{}, err
+	} else if exists {
 		if record.Status == domain.IdempotencyStatusCompleted && record.ResponseOrder != nil {
 			return *record.ResponseOrder, nil
 		}
@@ -55,7 +57,9 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		}
 	}
 
-	s.idempotencyService.StartProcessing(userID, idemKey)
+	if err := s.idempotencyService.StartProcessing(ctx, userID, idemKey); err != nil {
+		return domain.Order{}, err
+	}
 
 	cart, err := s.cartService.GetCart(ctx, userID)
 	if err != nil {
@@ -131,7 +135,9 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		return domain.Order{}, err
 	}
 
-	s.idempotencyService.Complete(userID, idemKey, &order)
+	if err := s.idempotencyService.Complete(ctx, userID, idemKey, &order); err != nil {
+		return domain.Order{}, err
+	}
 
 	return order, nil
 }
