@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/hanzy-dev/niskala/apps/api/internal/authjwt"
 	"github.com/hanzy-dev/niskala/apps/api/internal/config"
 	"github.com/hanzy-dev/niskala/apps/api/internal/database"
 	"github.com/hanzy-dev/niskala/apps/api/internal/server"
@@ -13,7 +14,6 @@ import (
 )
 
 func main() {
-	// 1. Load .env secara eksplisit di awal
 	if err := godotenv.Load(); err != nil {
 		log.Println("Info: .env file tidak ditemukan, menggunakan environment variable sistem")
 	}
@@ -41,9 +41,20 @@ func main() {
 		log.Fatal("Critical: DATABASE_URL tidak ditemukan di environment")
 	}
 
+	jwtVerifier, err := authjwt.NewVerifier(
+		context.Background(),
+		cfg.SupabaseJWKSURL,
+		cfg.SupabaseJWTIssuer,
+		cfg.SupabaseJWTAudience,
+	)
+	if err != nil {
+		log.Fatalf("Critical: Gagal inisialisasi JWT verifier: %v", err)
+	}
+
 	router := server.NewRouter(server.Dependencies{
 		DB:                    dbPool,
 		PricingServiceBaseURL: cfg.PricingServiceBaseURL,
+		JWTVerifier:           jwtVerifier,
 	})
 
 	log.Printf("Server: Starting on port %s in %s mode", cfg.Port, cfg.AppEnv)

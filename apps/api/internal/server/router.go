@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/hanzy-dev/niskala/apps/api/internal/auth"
+	"github.com/hanzy-dev/niskala/apps/api/internal/authjwt"
 	"github.com/hanzy-dev/niskala/apps/api/internal/handler"
 	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
 	"github.com/hanzy-dev/niskala/apps/api/internal/repository"
@@ -13,6 +14,7 @@ import (
 type Dependencies struct {
 	DB                    *pgxpool.Pool
 	PricingServiceBaseURL string
+	JWTVerifier           *authjwt.Verifier
 }
 
 func NewRouter(deps Dependencies) *gin.Engine {
@@ -21,6 +23,8 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	router.Use(httpx.CorrelationIDMiddleware())
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+
+	authMiddleware := auth.NewMiddleware(deps.JWTVerifier)
 
 	healthService := service.NewHealthService(deps.DB, deps.PricingServiceBaseURL)
 	healthHandler := handler.NewHealthHandler(healthService)
@@ -55,7 +59,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		api.GET("/products/:id", productHandler.GetProduct)
 
 		protected := api.Group("")
-		protected.Use(auth.RequireAuth())
+		protected.Use(authMiddleware.RequireAuth())
 		{
 			protected.GET("/me", meHandler.GetMe)
 
@@ -69,7 +73,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 			protected.GET("/orders/:id", orderHandler.GetOrder)
 
 			admin := protected.Group("/admin")
-			admin.Use(auth.RequireAdmin())
+			admin.Use(authMiddleware.RequireAdmin())
 			{
 				admin.GET("/ping", func(c *gin.Context) {
 					c.JSON(200, gin.H{
