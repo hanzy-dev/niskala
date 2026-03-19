@@ -39,6 +39,9 @@ func (h *CheckoutHandler) Checkout(c *gin.Context) {
 		case errors.Is(err, service.ErrProductNotFound):
 			httpx.BadRequest(c, "PRODUCT_NOT_FOUND", "One or more products could not be resolved")
 			return
+		case errors.Is(err, service.ErrInsufficientStock):
+			httpx.BadRequest(c, "INSUFFICIENT_STOCK", "Requested quantity exceeds available stock")
+			return
 		default:
 			httpx.Internal(c, "CHECKOUT_FAILED", "Checkout could not be completed")
 			return

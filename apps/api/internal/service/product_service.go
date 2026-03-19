@@ -36,3 +36,7 @@ func (s *ProductService) Update(ctx context.Context, product domain.Product) (do
 func (s *ProductService) UpdateStock(ctx context.Context, productID string, stock int) error {
 	return s.productRepository.UpdateStock(ctx, productID, stock)
 }
+
+func (s *ProductService) DecrementStock(ctx context.Context, productID string, qty int) error {
+	return s.productRepository.DecrementStock(ctx, productID, qty)
+}

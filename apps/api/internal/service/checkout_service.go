@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/hanzy-dev/niskala/apps/api/internal/domain"
 )
@@ -10,6 +11,7 @@ import (
 var (
 	ErrEmptyCart             = errors.New("empty cart")
 	ErrProductNotFound       = errors.New("product not found")
+	ErrInsufficientStock     = errors.New("insufficient stock")
 	ErrIdempotencyInProgress = errors.New("idempotency in progress")
 	ErrMissingIdempotencyKey = errors.New("missing idempotency key")
 )
@@ -76,6 +78,10 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 			return domain.Order{}, ErrProductNotFound
 		}
 
+		if product.Stock < cartItem.Qty {
+			return domain.Order{}, ErrInsufficientStock
+		}
+
 		subtotalCents += product.PriceCents * int64(cartItem.Qty)
 
 		orderItems = append(orderItems, domain.OrderItem{
@@ -97,6 +103,15 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		totalCents = quotedTotal
 	} else {
 		pricingFallbackUsed = true
+	}
+
+	for _, item := range orderItems {
+		if err := s.productService.DecrementStock(ctx, item.ProductID, item.Qty); err != nil {
+			if strings.Contains(err.Error(), "insufficient stock") {
+				return domain.Order{}, ErrInsufficientStock
+			}
+			return domain.Order{}, err
+		}
 	}
 
 	order, err := s.orderService.Create(ctx, domain.Order{

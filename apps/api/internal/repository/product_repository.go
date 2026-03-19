@@ -163,3 +163,24 @@ func (r *ProductRepository) UpdateStock(ctx context.Context, productID string, s
 
 	return nil
 }
+
+func (r *ProductRepository) DecrementStock(ctx context.Context, productID string, qty int) error {
+	if r.db == nil {
+		return fmt.Errorf("database connection is not available")
+	}
+
+	commandTag, err := r.db.Exec(ctx, `
+		UPDATE products
+		SET stock = stock - $2, updated_at = NOW()
+		WHERE id = $1 AND stock >= $2
+	`, productID, qty)
+	if err != nil {
+		return fmt.Errorf("decrement product stock: %w", err)
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		return fmt.Errorf("insufficient stock")
+	}
+
+	return nil
+}
