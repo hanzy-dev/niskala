@@ -49,6 +49,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	healthHandler := handler.NewHealthHandler(healthService)
 
 	productHandler := handler.NewProductHandler(productService)
+	adminProductHandler := handler.NewAdminProductHandler(productService)
 	cartHandler := handler.NewCartHandler(cartService)
 	checkoutHandler := handler.NewCheckoutHandler(checkoutService)
 	orderHandler := handler.NewOrderHandler(orderService)
@@ -84,6 +85,10 @@ func NewRouter(deps Dependencies) *gin.Engine {
 						"scope":  "admin",
 					})
 				})
+
+				admin.POST("/products", adminProductHandler.CreateProduct)
+				admin.PATCH("/products/:id", adminProductHandler.UpdateProduct)
+				admin.PATCH("/products/:id/stock", adminProductHandler.UpdateStock)
 			}
 		}
 	}

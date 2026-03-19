@@ -87,3 +87,79 @@ func (r *ProductRepository) GetByID(ctx context.Context, id string) (domain.Prod
 
 	return product, true, nil
 }
+
+func (r *ProductRepository) Create(ctx context.Context, product domain.Product) (domain.Product, error) {
+	if r.db == nil {
+		return domain.Product{}, fmt.Errorf("database connection is not available")
+	}
+
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO products (
+			id, name, description, price_cents, stock, category, image_url, is_active, created_at, updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+	`,
+		product.ID,
+		product.Name,
+		product.Description,
+		product.PriceCents,
+		product.Stock,
+		product.Category,
+		product.ImageURL,
+		product.IsActive,
+	)
+	if err != nil {
+		return domain.Product{}, fmt.Errorf("create product: %w", err)
+	}
+
+	return product, nil
+}
+
+func (r *ProductRepository) Update(ctx context.Context, product domain.Product) (domain.Product, error) {
+	if r.db == nil {
+		return domain.Product{}, fmt.Errorf("database connection is not available")
+	}
+
+	_, err := r.db.Exec(ctx, `
+		UPDATE products
+		SET
+			name = $2,
+			description = $3,
+			price_cents = $4,
+			category = $5,
+			image_url = $6,
+			is_active = $7,
+			updated_at = NOW()
+		WHERE id = $1
+	`,
+		product.ID,
+		product.Name,
+		product.Description,
+		product.PriceCents,
+		product.Category,
+		product.ImageURL,
+		product.IsActive,
+	)
+	if err != nil {
+		return domain.Product{}, fmt.Errorf("update product: %w", err)
+	}
+
+	return product, nil
+}
+
+func (r *ProductRepository) UpdateStock(ctx context.Context, productID string, stock int) error {
+	if r.db == nil {
+		return fmt.Errorf("database connection is not available")
+	}
+
+	_, err := r.db.Exec(ctx, `
+		UPDATE products
+		SET stock = $2, updated_at = NOW()
+		WHERE id = $1
+	`, productID, stock)
+	if err != nil {
+		return fmt.Errorf("update product stock: %w", err)
+	}
+
+	return nil
+}

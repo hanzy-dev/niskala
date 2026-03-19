@@ -24,3 +24,15 @@ func (s *ProductService) List(ctx context.Context) ([]domain.Product, error) {
 func (s *ProductService) GetByID(ctx context.Context, id string) (domain.Product, bool, error) {
 	return s.productRepository.GetByID(ctx, id)
 }
+
+func (s *ProductService) Create(ctx context.Context, product domain.Product) (domain.Product, error) {
+	return s.productRepository.Create(ctx, product)
+}
+
+func (s *ProductService) Update(ctx context.Context, product domain.Product) (domain.Product, error) {
+	return s.productRepository.Update(ctx, product)
+}
+
+func (s *ProductService) UpdateStock(ctx context.Context, productID string, stock int) error {
+	return s.productRepository.UpdateStock(ctx, productID, stock)
+}
