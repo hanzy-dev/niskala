@@ -6,15 +6,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hanzy-dev/niskala/apps/api/internal/authjwt"
 	"github.com/hanzy-dev/niskala/apps/api/internal/httpx"
+	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 )
 
 type Middleware struct {
-	verifier *authjwt.Verifier
+	verifier          *authjwt.Verifier
+	membershipService *service.MembershipService
 }
 
-func NewMiddleware(verifier *authjwt.Verifier) *Middleware {
+func NewMiddleware(verifier *authjwt.Verifier, membershipService *service.MembershipService) *Middleware {
 	return &Middleware{
-		verifier: verifier,
+		verifier:          verifier,
+		membershipService: membershipService,
 	}
 }
 
@@ -25,12 +28,7 @@ func (m *Middleware) RequireAuth() gin.HandlerFunc {
 		if authHeader != "" && m.verifier != nil && m.verifier.Enabled() {
 			claims, err := m.verifier.ParseBearerToken(authHeader)
 			if err == nil {
-				role := claims.Role
-				if role == "" {
-					role = RoleUser
-				}
-
-				SetUserContext(c, claims.Subject, role)
+				SetUserContext(c, claims.Subject, RoleUser)
 				c.Next()
 				return
 			}
@@ -43,20 +41,28 @@ func (m *Middleware) RequireAuth() gin.HandlerFunc {
 			return
 		}
 
-		role := c.GetHeader("X-Debug-User-Role")
-		if role == "" {
-			role = RoleUser
-		}
-
-		SetUserContext(c, userID, role)
+		SetUserContext(c, userID, RoleUser)
 		c.Next()
 	}
 }
 
 func (m *Middleware) RequireAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		role, ok := GetUserRole(c)
-		if !ok || !IsAdmin(role) {
+		userID, ok := GetUserID(c)
+		if !ok || userID == "" {
+			httpx.Unauthorized(c, "Missing authenticated user context")
+			c.Abort()
+			return
+		}
+
+		isAdmin, err := m.membershipService.IsAdmin(c.Request.Context(), userID)
+		if err != nil {
+			httpx.Internal(c, "AUTHORIZATION_FAILED", "Failed to verify admin membership")
+			c.Abort()
+			return
+		}
+
+		if !isAdmin {
 			httpx.Forbidden(c, "Admin access is required")
 			c.Abort()
 			return

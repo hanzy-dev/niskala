@@ -24,19 +24,17 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	authMiddleware := auth.NewMiddleware(deps.JWTVerifier)
-
-	healthService := service.NewHealthService(deps.DB, deps.PricingServiceBaseURL)
-	healthHandler := handler.NewHealthHandler(healthService)
-
 	productRepository := repository.NewProductRepository(deps.DB)
 	cartRepository := repository.NewCartRepository(deps.DB)
+	membershipRepository := repository.NewMembershipRepository(deps.DB)
 
 	productService := service.NewProductService(productRepository)
 	cartService := service.NewCartService(cartRepository)
 	orderService := service.NewOrderService()
 	idempotencyService := service.NewIdempotencyService()
 	pricingService := service.NewPricingService(deps.PricingServiceBaseURL)
+	membershipService := service.NewMembershipService(membershipRepository)
+
 	checkoutService := service.NewCheckoutService(
 		productService,
 		cartService,
@@ -44,6 +42,11 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		idempotencyService,
 		pricingService,
 	)
+
+	authMiddleware := auth.NewMiddleware(deps.JWTVerifier, membershipService)
+
+	healthService := service.NewHealthService(deps.DB, deps.PricingServiceBaseURL)
+	healthHandler := handler.NewHealthHandler(healthService)
 
 	productHandler := handler.NewProductHandler(productService)
 	cartHandler := handler.NewCartHandler(cartService)
