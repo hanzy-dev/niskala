@@ -26,7 +26,7 @@ async function loadCart() {
     const response = await api.get('/api/cart')
     cart.value = response.data
   } catch {
-    error.value = 'Failed to load cart.'
+    error.value = 'Gagal memuat keranjang.'
   } finally {
     loading.value = false
   }
@@ -37,7 +37,7 @@ async function removeItem(productId: string) {
     const response = await api.delete(`/api/cart/items/${productId}`)
     cart.value = response.data
   } catch {
-    error.value = 'Failed to remove cart item.'
+    error.value = 'Gagal menghapus item dari keranjang.'
   }
 }
 
@@ -51,25 +51,25 @@ onMounted(loadCart)
 <template>
   <section class="page">
     <div class="page-card">
-      <h1 class="page-title">Cart</h1>
-      <p class="page-subtitle">Cart loaded from the API.</p>
+      <h1 class="page-title">Keranjang</h1>
+      <p class="page-subtitle">Keranjang dimuat dari API.</p>
     </div>
 
-    <div v-if="loading" class="page-card">Loading cart...</div>
+    <div v-if="loading" class="page-card">Memuat keranjang...</div>
     <div v-else-if="error" class="page-card">{{ error }}</div>
 
     <div v-else-if="cart" class="page-card">
-      <div v-if="cart.items.length === 0">Your cart is empty.</div>
+      <div v-if="cart.items.length === 0">Keranjang kamu masih kosong.</div>
 
       <ul v-else class="page-list">
         <li v-for="item in cart.items" :key="item.product_id">
           {{ item.product_id }} × {{ item.qty }}
-          <button style="margin-left: 0.75rem;" @click="removeItem(item.product_id)">Remove</button>
+          <button style="margin-left: 0.75rem;" @click="removeItem(item.product_id)">Hapus</button>
         </li>
       </ul>
 
       <button v-if="cart.items.length > 0" style="margin-top: 1rem;" @click="goCheckout">
-        Continue to checkout
+        Lanjut ke checkout
       </button>
     </div>
   </section>

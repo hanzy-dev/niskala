@@ -27,12 +27,12 @@ async function submitCheckout() {
     const order = response.data.order ?? response.data
 
     if (order.pricing_fallback_used) {
-      fallbackMessage.value = 'Discount service is unavailable. Checkout was completed with normal pricing.'
+      fallbackMessage.value = 'Layanan diskon sedang tidak tersedia. Checkout tetap diproses dengan harga normal.'
     }
 
     router.push('/checkout/success')
   } catch (err: any) {
-    error.value = err?.response?.data?.error?.message || 'Checkout failed.'
+    error.value = err?.response?.data?.error?.message || 'Checkout gagal.'
   } finally {
     loading.value = false
   }
@@ -43,13 +43,13 @@ async function submitCheckout() {
   <section class="page">
     <div class="page-card">
       <h1 class="page-title">Checkout</h1>
-      <p class="page-subtitle">Submit checkout through the API.</p>
+      <p class="page-subtitle">Kirim proses checkout melalui API.</p>
 
       <p v-if="fallbackMessage">{{ fallbackMessage }}</p>
       <p v-if="error">{{ error }}</p>
 
       <button :disabled="loading" @click="submitCheckout">
-        {{ loading ? 'Processing...' : 'Place order' }}
+        {{ loading ? 'Memproses...' : 'Buat pesanan' }}
       </button>
     </div>
   </section>

@@ -29,7 +29,7 @@ async function loadProduct() {
     const response = await api.get(`/api/products/${route.params.id}`)
     product.value = response.data
   } catch {
-    error.value = 'Failed to load product.'
+    error.value = 'Gagal memuat detail produk.'
   } finally {
     loading.value = false
   }
@@ -45,7 +45,7 @@ async function addToCart() {
     })
     router.push('/cart')
   } catch {
-    error.value = 'Failed to add item to cart.'
+    error.value = 'Gagal menambahkan produk ke keranjang.'
   }
 }
 
@@ -54,15 +54,16 @@ onMounted(loadProduct)
 
 <template>
   <section class="page">
-    <div v-if="loading" class="page-card">Loading product...</div>
+    <div v-if="loading" class="page-card">Memuat detail produk...</div>
     <div v-else-if="error" class="page-card">{{ error }}</div>
 
     <div v-else-if="product" class="page-card">
-      <h1 class="page-title">{{ product.name }}</h1>
+      <h1 class="page-title">Detail Produk</h1>
+      <h2>{{ product.name }}</h2>
       <p class="page-subtitle">{{ product.description }}</p>
-      <p>Price: {{ product.price_cents }}</p>
-      <p>Stock: {{ product.stock }}</p>
-      <button @click="addToCart">Add to cart</button>
+      <p>Harga: {{ product.price_cents }}</p>
+      <p>Stok: {{ product.stock }}</p>
+      <button @click="addToCart">Tambah ke keranjang</button>
     </div>
   </section>
 </template>

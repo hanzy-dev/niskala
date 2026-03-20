@@ -21,7 +21,7 @@ async function loadOrders() {
     const response = await api.get('/api/orders')
     orders.value = response.data.items
   } catch {
-    error.value = 'Failed to load orders.'
+    error.value = 'Gagal memuat daftar pesanan.'
   } finally {
     loading.value = false
   }
@@ -33,15 +33,15 @@ onMounted(loadOrders)
 <template>
   <section class="page">
     <div class="page-card">
-      <h1 class="page-title">Orders</h1>
-      <p class="page-subtitle">Order history loaded from the API.</p>
+      <h1 class="page-title">Pesanan</h1>
+      <p class="page-subtitle">Riwayat pesanan dimuat dari API.</p>
     </div>
 
-    <div v-if="loading" class="page-card">Loading orders...</div>
+    <div v-if="loading" class="page-card">Memuat pesanan...</div>
     <div v-else-if="error" class="page-card">{{ error }}</div>
 
     <div v-else class="page-card">
-      <div v-if="orders.length === 0">No orders yet.</div>
+      <div v-if="orders.length === 0">Belum ada pesanan.</div>
 
       <ul v-else class="page-list">
         <li v-for="order in orders" :key="order.id">

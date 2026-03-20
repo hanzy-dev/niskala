@@ -26,7 +26,7 @@ async function loadProducts() {
     const response = await api.get('/api/products')
     products.value = response.data.items
   } catch {
-    error.value = 'Failed to load products.'
+    error.value = 'Gagal memuat daftar produk.'
   } finally {
     loading.value = false
   }
@@ -38,20 +38,20 @@ onMounted(loadProducts)
 <template>
   <section class="page">
     <div class="page-card">
-      <h1 class="page-title">Products</h1>
-      <p class="page-subtitle">Catalog loaded from the API.</p>
+      <h1 class="page-title">Produk</h1>
+      <p class="page-subtitle">Katalog produk dimuat dari API.</p>
     </div>
 
-    <div v-if="loading" class="page-card">Loading products...</div>
+    <div v-if="loading" class="page-card">Memuat produk...</div>
     <div v-else-if="error" class="page-card">{{ error }}</div>
 
     <div v-else class="page" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
       <article v-for="product in products" :key="product.id" class="page-card">
         <h2 style="margin-top: 0;">{{ product.name }}</h2>
         <p class="page-subtitle">{{ product.description }}</p>
-        <p>Price: {{ product.price_cents }}</p>
-        <p>Stock: {{ product.stock }}</p>
-        <RouterLink :to="`/products/${product.id}`">View detail</RouterLink>
+        <p>Harga: {{ product.price_cents }}</p>
+        <p>Stok: {{ product.stock }}</p>
+        <RouterLink :to="`/products/${product.id}`">Lihat detail</RouterLink>
       </article>
     </div>
   </section>
