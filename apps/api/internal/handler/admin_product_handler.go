@@ -11,7 +11,8 @@ import (
 )
 
 type AdminProductHandler struct {
-	productService *service.ProductService
+	productService      *service.ProductService
+	productCacheService *service.ProductCacheService
 }
 
 type CreateProductRequest struct {
@@ -38,9 +39,13 @@ type UpdateStockRequest struct {
 	Stock int `json:"stock"`
 }
 
-func NewAdminProductHandler(productService *service.ProductService) *AdminProductHandler {
+func NewAdminProductHandler(
+	productService *service.ProductService,
+	productCacheService *service.ProductCacheService,
+) *AdminProductHandler {
 	return &AdminProductHandler{
-		productService: productService,
+		productService:      productService,
+		productCacheService: productCacheService,
 	}
 }
 
@@ -70,6 +75,9 @@ func (h *AdminProductHandler) CreateProduct(c *gin.Context) {
 		httpx.Internal(c, "PRODUCT_CREATE_FAILED", "Gagal membuat produk")
 		return
 	}
+
+	h.productCacheService.InvalidateProduct(c.Request.Context(), product.ID)
+	h.productCacheService.InvalidateProductList(c.Request.Context())
 
 	c.JSON(http.StatusCreated, product)
 }
@@ -113,6 +121,9 @@ func (h *AdminProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	h.productCacheService.InvalidateProduct(c.Request.Context(), updatedProduct.ID)
+	h.productCacheService.InvalidateProductList(c.Request.Context())
+
 	c.JSON(http.StatusOK, updatedProduct)
 }
 
@@ -144,6 +155,9 @@ func (h *AdminProductHandler) UpdateStock(c *gin.Context) {
 		httpx.Internal(c, "PRODUCT_STOCK_UPDATE_FAILED", "Gagal memperbarui stok produk")
 		return
 	}
+
+	h.productCacheService.InvalidateProduct(c.Request.Context(), productID)
+	h.productCacheService.InvalidateProductList(c.Request.Context())
 
 	c.JSON(http.StatusOK, gin.H{
 		"id":    productID,

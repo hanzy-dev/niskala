@@ -9,10 +9,12 @@ import (
 	"github.com/hanzy-dev/niskala/apps/api/internal/repository"
 	"github.com/hanzy-dev/niskala/apps/api/internal/service"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 type Dependencies struct {
 	DB                    *pgxpool.Pool
+	Redis                 *redis.Client
 	PricingServiceBaseURL string
 	JWTVerifier           *authjwt.Verifier
 }
@@ -32,6 +34,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	membershipRepository := repository.NewMembershipRepository(deps.DB)
 
 	productService := service.NewProductService(productRepository)
+	productCacheService := service.NewProductCacheService(deps.Redis)
 	cartService := service.NewCartService(cartRepository)
 	orderService := service.NewOrderService(orderRepository, checkoutRepository)
 	idempotencyService := service.NewIdempotencyService(idempotencyRepository, orderRepository)
@@ -51,8 +54,8 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	healthService := service.NewHealthService(deps.DB, deps.PricingServiceBaseURL)
 	healthHandler := handler.NewHealthHandler(healthService)
 
-	productHandler := handler.NewProductHandler(productService)
-	adminProductHandler := handler.NewAdminProductHandler(productService)
+	productHandler := handler.NewProductHandler(productService, productCacheService)
+	adminProductHandler := handler.NewAdminProductHandler(productService, productCacheService)
 	cartHandler := handler.NewCartHandler(cartService)
 	checkoutHandler := handler.NewCheckoutHandler(checkoutService)
 	orderHandler := handler.NewOrderHandler(orderService)

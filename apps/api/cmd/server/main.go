@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hanzy-dev/niskala/apps/api/internal/authjwt"
+	"github.com/hanzy-dev/niskala/apps/api/internal/cache"
 	"github.com/hanzy-dev/niskala/apps/api/internal/config"
 	"github.com/hanzy-dev/niskala/apps/api/internal/database"
 	"github.com/hanzy-dev/niskala/apps/api/internal/server"
@@ -41,6 +42,8 @@ func main() {
 		log.Fatal("Critical: DATABASE_URL tidak ditemukan di environment")
 	}
 
+	redisClient := cache.NewRedisClient(cfg.RedisAddr)
+
 	jwtVerifier, err := authjwt.NewVerifier(
 		context.Background(),
 		cfg.SupabaseJWKSURL,
@@ -53,6 +56,7 @@ func main() {
 
 	router := server.NewRouter(server.Dependencies{
 		DB:                    dbPool,
+		Redis:                 redisClient,
 		PricingServiceBaseURL: cfg.PricingServiceBaseURL,
 		JWTVerifier:           jwtVerifier,
 	})
