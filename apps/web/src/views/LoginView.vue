@@ -1,35 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAppStore } from '../stores/app'
+import { computed } from 'vue'
+import { useAuthStore } from '../stores/auth'
 
-const appStore = useAppStore()
-const router = useRouter()
+const authStore = useAuthStore()
 
-const userId = ref(appStore.debugUserId)
-const role = ref(appStore.debugUserRole)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-function saveSession() {
-  appStore.setDebugUser(userId.value, role.value)
-  router.push('/products')
+async function handleGoogleLogin() {
+  await authStore.signInWithGoogle()
 }
 </script>
 
 <template>
   <section class="page">
     <div class="page-card">
-      <h1 class="page-title">Login</h1>
+      <h1 class="page-title">Masuk</h1>
       <p class="page-subtitle">
-        Debug auth placeholder for local development.
+        Masuk dengan Google melalui Supabase untuk mengakses keranjang, checkout, dan pesanan.
       </p>
 
-      <div style="display: grid; gap: 0.75rem; max-width: 360px; margin-top: 1rem;">
-        <input v-model="userId" placeholder="User ID" />
-        <select v-model="role">
-          <option value="user">user</option>
-          <option value="admin">admin</option>
-        </select>
-        <button @click="saveSession">Save debug session</button>
+      <div v-if="isAuthenticated">
+        <p class="page-subtitle">Kamu sudah masuk sebagai {{ authStore.userEmail }}</p>
+      </div>
+
+      <div v-else>
+        <button class="nav-button" @click="handleGoogleLogin">Masuk dengan Google</button>
       </div>
     </div>
   </section>

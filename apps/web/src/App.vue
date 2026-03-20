@@ -1,5 +1,21 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router';
+import { computed } from 'vue'
+import { RouterLink, RouterView } from 'vue-router'
+import { useAuthStore } from './stores/auth'
+
+const authStore = useAuthStore()
+
+const authLabel = computed(() => {
+  if (authStore.isAuthenticated) {
+    return authStore.userEmail || 'Sudah masuk'
+  }
+
+  return 'Masuk'
+})
+
+async function handleSignOut() {
+  await authStore.signOut()
+}
 </script>
 
 <template>
@@ -9,11 +25,14 @@ import { RouterLink, RouterView } from 'vue-router';
         <RouterLink class="brand" to="/">Niskala</RouterLink>
 
         <nav class="nav">
-          <RouterLink to="/products">Products</RouterLink>
-          <RouterLink to="/cart">Cart</RouterLink>
-          <RouterLink to="/orders">Orders</RouterLink>
+          <RouterLink to="/products">Produk</RouterLink>
+          <RouterLink to="/cart">Keranjang</RouterLink>
+          <RouterLink to="/orders">Pesanan</RouterLink>
           <RouterLink to="/admin/products">Admin</RouterLink>
-          <RouterLink to="/login">Login</RouterLink>
+          <RouterLink to="/login">{{ authLabel }}</RouterLink>
+          <button v-if="authStore.isAuthenticated" class="nav-button" @click="handleSignOut">
+            Keluar
+          </button>
         </nav>
       </div>
     </header>
