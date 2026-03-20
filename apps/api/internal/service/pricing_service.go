@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -16,8 +17,7 @@ type PricingService struct {
 }
 
 type pricingQuoteRequest struct {
-	Items      []pricingQuoteItem `json:"items"`
-	CouponCode *string            `json:"coupon_code"`
+	Items []pricingQuoteItem `json:"items"`
 }
 
 type pricingQuoteItem struct {
@@ -42,6 +42,10 @@ func NewPricingService(baseURL string) *PricingService {
 }
 
 func (s *PricingService) Quote(ctx context.Context, items []domain.OrderItem) (int64, int64, int64, error) {
+	if s.baseURL == "" {
+		return 0, 0, 0, fmt.Errorf("pricing service base url is empty")
+	}
+
 	requestItems := make([]pricingQuoteItem, 0, len(items))
 	for _, item := range items {
 		requestItems = append(requestItems, pricingQuoteItem{
@@ -52,40 +56,39 @@ func (s *PricingService) Quote(ctx context.Context, items []domain.OrderItem) (i
 	}
 
 	payload := pricingQuoteRequest{
-		Items:      requestItems,
-		CouponCode: nil,
+		Items: requestItems,
 	}
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, fmt.Errorf("marshal pricing request: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(
+	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		s.baseURL+"/pricing/quote",
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, fmt.Errorf("build pricing request: %w", err)
 	}
 
-	request.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
-	response, err := s.httpClient.Do(request)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, fmt.Errorf("call pricing service: %w", err)
 	}
-	defer response.Body.Close()
+	defer resp.Body.Close()
 
-	if response.StatusCode >= 500 {
-		return 0, 0, 0, err
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return 0, 0, 0, fmt.Errorf("pricing service returned status %d", resp.StatusCode)
 	}
 
 	var quote pricingQuoteResponse
-	if err := json.NewDecoder(response.Body).Decode(&quote); err != nil {
-		return 0, 0, 0, err
+	if err := json.NewDecoder(resp.Body).Decode(&quote); err != nil {
+		return 0, 0, 0, fmt.Errorf("decode pricing response: %w", err)
 	}
 
 	return quote.SubtotalCents, quote.DiscountCents, quote.TotalCents, nil

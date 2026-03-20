@@ -51,7 +51,8 @@ func (h *CheckoutHandler) Checkout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"order": order,
 		"meta": gin.H{
-			"correlation_id": httpx.GetCorrelationID(c),
+			"correlation_id":        httpx.GetCorrelationID(c),
+			"pricing_fallback_used": order.PricingFallbackUsed,
 		},
 	})
 }
