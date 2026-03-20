@@ -8,17 +8,26 @@ import (
 )
 
 type OrderService struct {
-	orderRepository *repository.OrderRepository
+	orderRepository    *repository.OrderRepository
+	checkoutRepository *repository.CheckoutRepository
 }
 
-func NewOrderService(orderRepository *repository.OrderRepository) *OrderService {
+func NewOrderService(
+	orderRepository *repository.OrderRepository,
+	checkoutRepository *repository.CheckoutRepository,
+) *OrderService {
 	return &OrderService{
-		orderRepository: orderRepository,
+		orderRepository:    orderRepository,
+		checkoutRepository: checkoutRepository,
 	}
 }
 
 func (s *OrderService) Create(ctx context.Context, order domain.Order) (domain.Order, error) {
 	return s.orderRepository.Create(ctx, order)
+}
+
+func (s *OrderService) CreateWithCheckoutTransaction(ctx context.Context, userID string, order domain.Order) (domain.Order, error) {
+	return s.checkoutRepository.Checkout(ctx, userID, order)
 }
 
 func (s *OrderService) ListByUserID(ctx context.Context, userID string) ([]domain.Order, error) {

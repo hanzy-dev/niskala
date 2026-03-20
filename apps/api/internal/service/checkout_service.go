@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/hanzy-dev/niskala/apps/api/internal/domain"
 )
@@ -61,13 +60,18 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		return domain.Order{}, err
 	}
 
-	cart, err := s.cartService.GetCart(ctx, userID)
-	if err != nil {
+	fail := func(err error) (domain.Order, error) {
+		_ = s.idempotencyService.Delete(ctx, userID, idemKey)
 		return domain.Order{}, err
 	}
 
+	cart, err := s.cartService.GetCart(ctx, userID)
+	if err != nil {
+		return fail(err)
+	}
+
 	if len(cart.Items) == 0 {
-		return domain.Order{}, ErrEmptyCart
+		return fail(ErrEmptyCart)
 	}
 
 	var subtotalCents int64
@@ -76,14 +80,10 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 	for _, cartItem := range cart.Items {
 		product, ok, err := s.productService.GetByID(ctx, cartItem.ProductID)
 		if err != nil {
-			return domain.Order{}, err
+			return fail(err)
 		}
 		if !ok {
-			return domain.Order{}, ErrProductNotFound
-		}
-
-		if product.Stock < cartItem.Qty {
-			return domain.Order{}, ErrInsufficientStock
+			return fail(ErrProductNotFound)
 		}
 
 		subtotalCents += product.PriceCents * int64(cartItem.Qty)
@@ -109,16 +109,7 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		pricingFallbackUsed = true
 	}
 
-	for _, item := range orderItems {
-		if err := s.productService.DecrementStock(ctx, item.ProductID, item.Qty); err != nil {
-			if strings.Contains(err.Error(), "insufficient stock") {
-				return domain.Order{}, ErrInsufficientStock
-			}
-			return domain.Order{}, err
-		}
-	}
-
-	order, err := s.orderService.Create(ctx, domain.Order{
+	order, err := s.orderService.CreateWithCheckoutTransaction(ctx, userID, domain.Order{
 		UserID:              userID,
 		Status:              "created",
 		SubtotalCents:       subtotalCents,
@@ -128,15 +119,14 @@ func (s *CheckoutService) Checkout(ctx context.Context, userID string, idemKey s
 		Items:               orderItems,
 	})
 	if err != nil {
-		return domain.Order{}, err
-	}
-
-	if err := s.cartService.ClearCart(ctx, userID); err != nil {
-		return domain.Order{}, err
+		if err.Error() == "insufficient stock" {
+			return fail(ErrInsufficientStock)
+		}
+		return fail(err)
 	}
 
 	if err := s.idempotencyService.Complete(ctx, userID, idemKey, &order); err != nil {
-		return domain.Order{}, err
+		return fail(err)
 	}
 
 	return order, nil
