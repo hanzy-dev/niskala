@@ -14,6 +14,10 @@ const error = ref('')
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
+function formatPrice(value: number) {
+  return new Intl.NumberFormat('id-ID').format(value)
+}
+
 async function loadOrder() {
   if (!isAuthenticated.value) {
     order.value = null
@@ -53,14 +57,23 @@ onMounted(loadOrder)
     <div v-else-if="order" class="page-card">
       <h1 class="page-title">Detail Pesanan</h1>
       <p class="page-subtitle">ID: {{ order.id }}</p>
-      <p>Status: {{ order.status }}</p>
-      <p>Total: {{ order.total_cents }}</p>
+      <p><strong>Status:</strong> {{ order.status }}</p>
+      <p><strong>Subtotal:</strong> Rp {{ formatPrice(order.subtotal_cents ?? 0) }}</p>
+      <p><strong>Diskon:</strong> Rp {{ formatPrice(order.discount_cents ?? 0) }}</p>
+      <p><strong>Total:</strong> Rp {{ formatPrice(order.total_cents ?? 0) }}</p>
 
-      <ul class="page-list">
-        <li v-for="item in order.items" :key="item.product_id">
-          {{ item.product_name_snapshot }} × {{ item.qty }}
-        </li>
-      </ul>
+      <div style="margin-top: 1rem; display: grid; gap: 0.75rem;">
+        <article
+          v-for="item in order.items"
+          :key="item.product_id"
+          style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem;"
+        >
+          <h2 style="margin-top: 0;">{{ item.product_name_snapshot }}</h2>
+          <p><strong>Jumlah:</strong> {{ item.qty }}</p>
+          <p><strong>Harga satuan:</strong> Rp {{ formatPrice(item.price_cents) }}</p>
+          <p><strong>Subtotal item:</strong> Rp {{ formatPrice(item.price_cents * item.qty) }}</p>
+        </article>
+      </div>
     </div>
   </section>
 </template>

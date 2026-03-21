@@ -18,6 +18,10 @@ const products = ref<Product[]>([])
 const loading = ref(false)
 const error = ref('')
 
+function formatPrice(value: number) {
+  return new Intl.NumberFormat('id-ID').format(value)
+}
+
 async function loadProducts() {
   loading.value = true
   error.value = ''
@@ -47,10 +51,11 @@ onMounted(loadProducts)
 
     <div v-else class="page" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
       <article v-for="product in products" :key="product.id" class="page-card">
+        <p class="page-subtitle" style="margin-bottom: 0.25rem;">{{ product.category }}</p>
         <h2 style="margin-top: 0;">{{ product.name }}</h2>
         <p class="page-subtitle">{{ product.description }}</p>
-        <p>Harga: {{ product.price_cents }}</p>
-        <p>Stok: {{ product.stock }}</p>
+        <p><strong>Harga:</strong> Rp {{ formatPrice(product.price_cents) }}</p>
+        <p><strong>Stok:</strong> {{ product.stock }}</p>
         <RouterLink :to="`/products/${product.id}`">Lihat detail</RouterLink>
       </article>
     </div>

@@ -19,6 +19,10 @@ const error = ref('')
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
+function formatPrice(value: number) {
+  return new Intl.NumberFormat('id-ID').format(value)
+}
+
 async function loadOrders() {
   if (!isAuthenticated.value) {
     orders.value = []
@@ -60,16 +64,15 @@ onMounted(loadOrders)
     <div v-else-if="loading" class="page-card">Memuat pesanan...</div>
     <div v-else-if="error" class="page-card">{{ error }}</div>
 
-    <div v-else class="page-card">
-      <div v-if="orders.length === 0">Belum ada pesanan.</div>
+    <div v-else class="page">
+      <div v-if="orders.length === 0" class="page-card">Belum ada pesanan.</div>
 
-      <ul v-else class="page-list">
-        <li v-for="order in orders" :key="order.id">
-          <RouterLink :to="`/orders/${order.id}`">
-            {{ order.id }} — {{ order.status }} — {{ order.total_cents }}
-          </RouterLink>
-        </li>
-      </ul>
+      <article v-for="order in orders" :key="order.id" class="page-card">
+        <h2 style="margin-top: 0;">Pesanan {{ order.id }}</h2>
+        <p class="page-subtitle">Status: {{ order.status }}</p>
+        <p><strong>Total:</strong> Rp {{ formatPrice(order.total_cents) }}</p>
+        <RouterLink :to="`/orders/${order.id}`">Lihat detail pesanan</RouterLink>
+      </article>
     </div>
   </section>
 </template>
