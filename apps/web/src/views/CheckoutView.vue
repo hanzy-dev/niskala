@@ -35,7 +35,14 @@ async function submitCheckout() {
       fallbackMessage.value = 'Layanan diskon sedang tidak tersedia. Checkout tetap diproses dengan harga normal.'
     }
 
-    router.push('/checkout/success')
+    router.push({
+      path: '/checkout/success',
+      query: {
+        order_id: order.id,
+        total: String(order.total_cents ?? 0),
+        fallback: order.pricing_fallback_used ? '1' : '0',
+      },
+    })
   } catch (err: any) {
     error.value = err?.response?.data?.error?.message || 'Checkout gagal.'
   } finally {

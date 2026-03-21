@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const authLabel = computed(() => {
   if (authStore.isAuthenticated) {
@@ -15,6 +16,7 @@ const authLabel = computed(() => {
 
 async function handleSignOut() {
   await authStore.signOut()
+  router.push('/login')
 }
 </script>
 
