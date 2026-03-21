@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { api } from '../lib/api'
 
 type Product = {
@@ -72,6 +73,10 @@ onMounted(loadProducts)
       <p class="page-subtitle">
         Kelola stok produk melalui backend admin yang terproteksi.
       </p>
+
+      <div style="margin-top: 1rem;">
+        <RouterLink class="nav-button" to="/admin/products/new">Tambah produk baru</RouterLink>
+      </div>
     </div>
 
     <div v-if="loading" class="page-card">Memuat daftar produk admin...</div>
