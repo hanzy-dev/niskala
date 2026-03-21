@@ -1,6 +1,9 @@
 package server
 
 import (
+	"time"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/hanzy-dev/niskala/apps/api/internal/auth"
 	"github.com/hanzy-dev/niskala/apps/api/internal/authjwt"
@@ -21,6 +24,15 @@ type Dependencies struct {
 
 func NewRouter(deps Dependencies) *gin.Engine {
 	router := gin.New()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Correlation-ID", "Idempotency-Key"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	router.Use(httpx.CorrelationIDMiddleware())
 	router.Use(gin.Logger())

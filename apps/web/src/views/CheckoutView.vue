@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../lib/api'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
 const loading = ref(false)
 const error = ref('')
 const fallbackMessage = ref('')
+
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 async function submitCheckout() {
   loading.value = true
@@ -37,6 +42,10 @@ async function submitCheckout() {
     loading.value = false
   }
 }
+
+function goLogin() {
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -45,12 +54,19 @@ async function submitCheckout() {
       <h1 class="page-title">Checkout</h1>
       <p class="page-subtitle">Kirim proses checkout melalui API.</p>
 
-      <p v-if="fallbackMessage">{{ fallbackMessage }}</p>
-      <p v-if="error">{{ error }}</p>
+      <div v-if="!isAuthenticated">
+        <p>Kamu harus masuk terlebih dahulu untuk melakukan checkout.</p>
+        <button class="nav-button" @click="goLogin">Ke halaman masuk</button>
+      </div>
 
-      <button :disabled="loading" @click="submitCheckout">
-        {{ loading ? 'Memproses...' : 'Buat pesanan' }}
-      </button>
+      <div v-else>
+        <p v-if="fallbackMessage">{{ fallbackMessage }}</p>
+        <p v-if="error">{{ error }}</p>
+
+        <button :disabled="loading" @click="submitCheckout">
+          {{ loading ? 'Memproses...' : 'Buat pesanan' }}
+        </button>
+      </div>
     </div>
   </section>
 </template>
