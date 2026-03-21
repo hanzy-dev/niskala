@@ -1,122 +1,88 @@
 # Niskala
 
-A backend-heavy commerce system focused on checkout correctness, idempotent order processing, stock-safe transactions, and resilience against downstream service failures.
-
-## Overview
-
-Niskala is a backend-heavy commerce project designed to demonstrate:
-- safe checkout flow design
-- idempotent order creation
-- stock-safe transaction handling
-- pricing service fallback
-- Redis-backed local infrastructure
-- cross-service observability
-
-It is intentionally built to emphasize backend engineering depth over UI complexity.
+A high-integrity commerce engine designed for critical transaction safety. Niskala prioritizes checkout correctness and system resilience, ensuring zero-stock leaks and idempotent processing even when downstream services fail.
 
 ## Stack
 
-### Frontend
-- Vue 3
-- TypeScript
-- Pinia
-- Vue Router
-- Axios
+- Frontend: Vue 3 + TypeScript + Pinia + Vite
+- API: Go + Gin
+- Pricing service: Rust
+- Database: Postgres (Supabase)
+- Cache: Redis
+- Auth: Supabase Auth (Google OAuth)
 
-### API
-- Go
-- Gin
+## Current Capabilities
 
-### Pricing Service
-- Rust
-- Axum
+### User flow
+- Login with Google via Supabase
+- Browse products from real backend
+- View product detail
+- Add items to cart
+- Checkout with idempotency key
+- View orders and order details
 
-### Data and Infra
-- Supabase Auth
-- Supabase Postgres
-- Redis
-- Docker Compose
-- GitHub Actions
+### Admin flow
+- Protected admin routes
+- Product list for admin
+- Stock update from frontend
+- Create product from frontend
 
-## Current capabilities
+### Backend guarantees
+- Products, carts, orders, order items persisted in Postgres
+- Membership-based admin authorization
+- Redis caching for product reads
+- Pricing service integration with fallback mode
+- Transactional checkout with stock locking
+- Idempotent checkout persisted in database
 
-- product list and product detail flow
-- cart add/update/delete flow
-- checkout placeholder flow
-- order history and order detail flow
-- idempotency key replay support
-- pricing service integration
-- pricing fallback foundation
-- correlation ID propagation
-- consistent error response format
-- local infra with Redis
+## Project Structure
 
-## Project structure
-
-- `apps/web` — Vue frontend
+- `apps/web` — frontend app
 - `apps/api` — Go API
 - `apps/pricing` — Rust pricing service
 - `docs` — architecture and scope docs
-- `scripts` — local helper scripts
+- `scripts` — local development helpers
 
-## Run locally
+## Local Development
 
-### Web
+### 1. Start Redis
 ```bash
-cd apps/web
-npm install
-npm run dev
+docker compose up -d
 ```
 
-### API
-
-```
+2. Start API
+```bash
 cd apps/api
 go run ./cmd/server
 ```
 
-### Pricing service
-
-```
+3. Start pricing service
+```bash
 cd apps/pricing
 cargo run
 ```
 
-### Redis
-
+4. Start frontend
+```bash
+cd apps/web
+npm run dev
 ```
-docker compose up -d
-```
 
-## Tests
-
+## Environment Files
 ### API
 
-```
-cd apps/api
-go test ./...
-```
+Copy:
 
-### Pricing
+- `apps/api/.env.example` → `apps/api/.env`
 
-```
-cd apps/pricing
-cargo test
-```
+### Web
 
-## Engineering notes
+Copy:
 
-- money values use integer cents
-- checkout requires Idempotency-Key
-- pricing service failures can fall back to normal pricing
-- correlation IDs are propagated through HTTP requests
-- current auth flow uses debug headers as a local development placeholder
+- `apps/web/.env.example` → `apps/web/.env`
 
-## Next evolution
+### Notes
 
-- replace debug auth with Supabase JWT verification
-- move in-memory flows to Postgres-backed repositories
-- add transactional checkout with row locking
-- persist idempotency records in the database
-- add Redis-backed product caching
-- enrich structured logging and metrics
+- Supabase project is used for Postgres and Auth
+- Google OAuth is configured through Supabase Auth
+- Admin access depends on the memberships table role

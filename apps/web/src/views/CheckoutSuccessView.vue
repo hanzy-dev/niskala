@@ -17,19 +17,19 @@ const fallbackUsed = computed(() => String(route.query.fallback ?? '0') === '1')
   <section class="page">
     <div class="page-card">
       <h1 class="page-title">Checkout Berhasil</h1>
-      <p class="page-subtitle">Pesanan kamu berhasil dibuat.</p>
+      <p class="page-subtitle">Pesanan kamu berhasil dibuat dan sudah tercatat di sistem.</p>
 
       <div style="margin-top: 1rem; display: grid; gap: 0.75rem;">
         <p><strong>ID Pesanan:</strong> {{ orderId || '-' }}</p>
         <p><strong>Total:</strong> Rp {{ formatPrice(total) }}</p>
         <p v-if="fallbackUsed">
-          <strong>Catatan:</strong> Perhitungan checkout menggunakan fallback harga normal karena layanan pricing sedang tidak tersedia.
+          <strong>Catatan:</strong> Perhitungan memakai fallback harga normal karena layanan pricing sedang tidak tersedia.
         </p>
       </div>
 
       <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem;">
         <RouterLink to="/orders">Lihat semua pesanan</RouterLink>
-        <RouterLink to="/products">Kembali ke produk</RouterLink>
+        <RouterLink to="/products">Lanjut belanja</RouterLink>
       </div>
     </div>
   </section>

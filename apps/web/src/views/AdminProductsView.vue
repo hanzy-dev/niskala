@@ -20,6 +20,10 @@ const saving = ref('')
 const error = ref('')
 const success = ref('')
 
+function formatPrice(value: number) {
+  return new Intl.NumberFormat('id-ID').format(value)
+}
+
 async function loadProducts() {
   loading.value = true
   error.value = ''
@@ -41,10 +45,7 @@ async function updateStock(productId: string, stock: number) {
   success.value = ''
 
   try {
-    await api.patch(`/api/admin/products/${productId}/stock`, {
-      stock,
-    })
-
+    await api.patch(`/api/admin/products/${productId}/stock`, { stock })
     success.value = `Stok produk ${productId} berhasil diperbarui.`
     await loadProducts()
   } catch (err: any) {
@@ -71,7 +72,7 @@ onMounted(loadProducts)
     <div class="page-card">
       <h1 class="page-title">Admin Produk</h1>
       <p class="page-subtitle">
-        Kelola stok produk melalui backend admin yang terproteksi.
+        Kelola produk dan stok melalui backend admin yang terproteksi.
       </p>
 
       <div style="margin-top: 1rem;">
@@ -84,18 +85,15 @@ onMounted(loadProducts)
     <div v-else class="page">
       <div v-if="success" class="page-card">{{ success }}</div>
 
-      <article
-        v-for="product in products"
-        :key="product.id"
-        class="page-card"
-      >
+      <article v-for="product in products" :key="product.id" class="page-card">
+        <p class="page-subtitle" style="margin-bottom: 0.25rem;">{{ product.category }}</p>
         <h2 style="margin-top: 0">{{ product.name }}</h2>
         <p class="page-subtitle">{{ product.description }}</p>
 
         <p><strong>ID:</strong> {{ product.id }}</p>
-        <p><strong>Harga:</strong> {{ product.price_cents }}</p>
+        <p><strong>Harga:</strong> Rp {{ formatPrice(product.price_cents) }}</p>
         <p><strong>Stok:</strong> {{ product.stock }}</p>
-        <p><strong>Kategori:</strong> {{ product.category }}</p>
+        <p><strong>Status:</strong> {{ product.is_active ? 'Aktif' : 'Nonaktif' }}</p>
 
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
           <button class="nav-button" :disabled="saving === product.id || product.stock <= 0" @click="decreaseStock(product)">
@@ -105,6 +103,8 @@ onMounted(loadProducts)
           <button class="nav-button" :disabled="saving === product.id" @click="increaseStock(product)">
             {{ saving === product.id ? 'Menyimpan...' : 'Tambah stok' }}
           </button>
+
+          <RouterLink class="nav-button" :to="`/products/${product.id}`">Lihat sebagai pengguna</RouterLink>
         </div>
       </article>
     </div>
